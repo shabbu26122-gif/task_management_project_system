@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}{{ task.title }} - Task Management System{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Back Button -->
+    <div class="mb-6">
+        <a href="{{ url_for('admin_dashboard' if session.role == 'admin' else 'employee_dashboard') }}" 
+           class="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Back to Dashboard
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Main Task Details -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex items-start justify-between mb-4">
+                        <h1 class="text-2xl font-bold text-gray-900">{{ task.title }}</h1>
+                        <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full
+                            {% if task.priority == 'high' %}bg-red-100 text-red-800
+                            {% elif task.priority == 'medium' %}bg-yellow-100 text-yellow-800
+                            {% elif task.priority == 'low' %}bg-green-100 text-green-800
+                            {% endif %}">
+                            {{ task.priority|title }} Priority
+                        </span>
+                    </div>
+                    
+                    <div class="flex items-center space-x-6 text-sm text-gray-600">
+                        <div class="flex items-center">
+                            <i class="fas fa-user mr-2"></i>
+                            Created by {{ task.created_by }}
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-calendar-alt mr-2"></i>
+                            Due: {{ task.due_date }}
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-clock mr-2"></i>
+                            Created: {{ task.created_at.strftime('%Y-%m-%d %H:%M') }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Description</h3>
+                    <p class="text-gray-700 leading-relaxed">{{ task.description }}</p>
+                </div>
+            </div>
+
+            <!-- Comments Section -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 mt-8">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-900">Comments</h2>
+                </div>
+                
+                <!-- Add Comment Form -->
+                <div class="p-6 border-b border-gray-200 bg-gray-50">
+                    <form method="POST" action="{{ url_for('add_comment') }}">
+                        <input type="hidden" name="task_id" value="{{ task._id }}">
+                        <div class="mb-4">
+                            <label for="comment" class="block text-sm font-medium text-gray-700 mb-2">Add a comment</label>
+                            <textarea name="comment" id="comment" rows="3" required
+                                      class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                      placeholder="Write your comment here..."></textarea>
+                        </div>
+                        <button type="submit" 
+                                class="bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                            <i class="fas fa-comment mr-2"></i>Add Comment
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Comments List -->
+                <div class="divide-y divide-gray-200">
+                    {% if task.comments %}
+                        {% for comment in task.comments %}
+                        <div class="p-6">
+                            <div class="flex items-start space-x-3">
+                                <div class="flex-shrink-0">
+                                    <div class="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
+                                        <span class="text-white text-sm font-medium">{{ comment.author[0]|upper }}</span>
+                                    </div>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-1">
+                                        <h4 class="text-sm font-medium text-gray-900">{{ comment.author }}</h4>
+                                        <span class="text-xs text-gray-500">{{ comment.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
+                                    </div>
+                                    <p class="text-gray-700">{{ comment.text }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="p-6 text-center">
+                        <i class="fas fa-comments text-gray-400 text-2xl mb-2"></i>
+                        <p class="text-gray-500">No comments yet. Be the first to comment!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="lg:col-span-1">
+            <!-- Status Card -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Status</h3>
+                    
+                    <div class="mb-4">
+                        <span class="inline-flex px-3 py-2 text-sm font-medium rounded-full
+                            {% if task.status == 'assigned' %}bg-gray-100 text-gray-800
+                            {% elif task.status == 'in_progress' %}bg-yellow-100 text-yellow-800
+                            {% elif task.status == 'review' %}bg-purple-100 text-purple-800
+                            {% elif task.status == 'completed' %}bg-green-100 text-green-800
+                            {% endif %}">
+                            {{ task.status|replace('_', ' ')|title }}
+                        </span>
+                    </div>
+                    
+                    <!-- Status Update Form (for employees only or admin) -->
+                    {% if session.role == 'employee' and task.assigned_to == session.username %}
+                    <form method="POST" action="{{ url_for('update_task_status') }}">
+                        <input type="hidden" name="task_id" value="{{ task._id }}">
+                        <div class="mb-4">
+                            <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Update Status</label>
+                            <select name="status" id="status" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <option value="assigned" {% if task.status == 'assigned' %}selected{% endif %}>Assigned</option>
+                                <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                <option value="review" {% if task.status == 'review' %}selected{% endif %}>Ready for Review</option>
+                                <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Completed</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                            <i class="fas fa-sync-alt mr-2"></i>Update Status
+                        </button>
+                    </form>
+                    {% elif session.role == 'admin' %}
+                    <form method="POST" action="{{ url_for('update_task_status') }}">
+                        <input type="hidden" name="task_id" value="{{ task._id }}">
+                        <div class="mb-4">
+                            <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Update Status</label>
+                            <select name="status" id="status" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <option value="assigned" {% if task.status == 'assigned' %}selected{% endif %}>Assigned</option>
+                                <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                <option value="review" {% if task.status == 'review' %}selected{% endif %}>Under Review</option>
+                                <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Completed</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                            <i class="fas fa-sync-alt mr-2"></i>Update Status
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Task Info Card -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Task Information</h3>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Assigned To</p>
+                            <p class="text-gray-900">{{ task.assigned_to }}</p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Priority</p>
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                {% if task.priority == 'high' %}bg-red-100 text-red-800
+                                {% elif task.priority == 'medium' %}bg-yellow-100 text-yellow-800
+                                {% elif task.priority == 'low' %}bg-green-100 text-green-800
+                                {% endif %}">
+                                {{ task.priority|title }}
+                            </span>
+                        </div>
+                        
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Due Date</p>
+                            <p class="text-gray-900">{{ task.due_date }}</p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Created By</p>
+                            <p class="text-gray-900">{{ task.created_by }}</p>
+                        </div>
+                        
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Created On</p>
+                            <p class="text-gray-900">{{ task.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

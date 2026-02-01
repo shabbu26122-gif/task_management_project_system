@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Add New Task - Task Management System{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Back Button -->
+    <div class="mb-6">
+        <a href="{{ url_for('admin_dashboard') }}" 
+           class="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Back to Dashboard
+        </a>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+            <h1 class="text-2xl font-bold text-gray-900 mb-2">Add New Task</h1>
+            <p class="text-gray-600">Create and assign a new task to team members</p>
+        </div>
+        
+        <form method="POST" class="p-6 space-y-6">
+            <div>
+                <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
+                    Task Title <span class="text-red-500">*</span>
+                </label>
+                <input type="text" name="title" id="title" required
+                       class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                       placeholder="Enter task title">
+            </div>
+
+            <div>
+                <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+                    Description <span class="text-red-500">*</span>
+                </label>
+                <textarea name="description" id="description" rows="4" required
+                          class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                          placeholder="Provide detailed task description..."></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="assigned_to" class="block text-sm font-medium text-gray-700 mb-2">
+                        Assign To <span class="text-red-500">*</span>
+                    </label>
+                    <select name="assigned_to" id="assigned_to" required
+                            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                        <option value="">Select an employee</option>
+                        {% for employee in employees %}
+                        <option value="{{ employee.username }}">{{ employee.full_name }} ({{ employee.username }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label for="priority" class="block text-sm font-medium text-gray-700 mb-2">
+                        Priority <span class="text-red-500">*</span>
+                    </label>
+                    <select name="priority" id="priority" required
+                            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                        <option value="">Select priority</option>
+                        <option value="low">Low Priority</option>
+                        <option value="medium">Medium Priority</option>
+                        <option value="high">High Priority</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label for="due_date" class="block text-sm font-medium text-gray-700 mb-2">
+                    Due Date <span class="text-red-500">*</span>
+                </label>
+                <input type="date" name="due_date" id="due_date" required
+                       class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+            </div>
+
+            <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+                <a href="{{ url_for('admin_dashboard') }}" 
+                   class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors">
+                    Cancel
+                </a>
+                <button type="submit" 
+                        class="bg-primary hover:bg-blue-600 text-white px-8 py-3 rounded-lg font-medium transition-colors">
+                    <i class="fas fa-plus mr-2"></i>Create Task
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {% if not employees %}
+    <div class="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div class="flex items-center">
+            <i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>
+            <div>
+                <h3 class="text-sm font-medium text-yellow-800">No employees found</h3>
+                <p class="text-sm text-yellow-700 mt-1">
+                    You need to add employees before creating tasks. 
+                    <a href="{{ url_for('manage_employees') }}" class="underline font-medium">Add employees here</a>.
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Set minimum date to today
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('due_date').setAttribute('min', today);
+});
+</script>
+{% endblock %}
